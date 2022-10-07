@@ -80,6 +80,7 @@ void IRLockPlugin::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf)
 
   this->camera->SetActive(true);
 
+  create_socket();
 }
 
 void IRLockPlugin::OnUpdated()
@@ -97,7 +98,8 @@ void IRLockPlugin::OnUpdated()
 
     gazebo::msgs::LogicalCameraImage_Model model = img.model(idx);
 
-    if (model.has_name() && model.name() == "irlock_beacon") {
+
+    if (model.has_name() && model.name().find("irlock_beacon") != std::string::npos) {
 
       if (model.has_pose()) {
 
@@ -119,13 +121,45 @@ void IRLockPlugin::OnUpdated()
         irlock_message.set_size_x(0); // unused by beacon estimator
         irlock_message.set_size_y(0); // unused by beacon estimator
 
+
+        nlohmann::json msg;
+
+        msg["frame"] = {
+          {"id", 2},
+          {"sig", irlock_message.signature()},
+          {"x", irlock_message.pos_x()*1000},
+          {"y", irlock_message.pos_y()*1000},
+          {"width", irlock_message.size_x()},
+          {"height", irlock_message.size_y()}
+        };
         // send message
         irlock_pub_->Publish(irlock_message);
-
+        send(msg);
       }
     }
   }
 
+}
+
+void IRLockPlugin::create_socket(){
+  if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&sockaddr, 0, sizeof(sockaddr));
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = htons(PORT);
+    sockaddr.sin_addr.s_addr = inet_addr(IPADDRESS);
+
+}
+
+void IRLockPlugin::send(nlohmann::json msg_out){
+  char buffer[MAXLINE];
+  sendto(sockfd, msg_out.dump().c_str(), msg_out.dump().length(),
+      MSG_CONFIRM, (const struct sockaddr *) &sockaddr,
+          sizeof(sockaddr));
 }
 
 /* vim: set et fenc=utf-8 ff=unix sts=0 sw=2 ts=2 : */

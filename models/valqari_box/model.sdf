@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+
+<sdf version="1.5">
+  <model name="Valquari Mailbox">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://valqari_box/meshes/valqari_box.stl</uri>
+            <scale>1 1.2 1.2</scale>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name = "collision">
+        <geometry>
+          <mesh>
+            <uri>model://valqari_box/meshes/valqari_box.stl</uri>
+            <scale>1 1.2 1.2</scale>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>
